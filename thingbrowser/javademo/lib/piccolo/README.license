@@ -1,0 +1,8 @@
+URL: http://www.cs.umd.edu/hcil/piccolo/download/index.shtml
+License: BSD Public License
+License File: license-piccolo.txt
+
+Description:
+  Piccolo is a toolkit that supports the development of 2D structured
+  graphics programs, in general, and Zoomable User Interfaces (ZUIs),
+  in particular.

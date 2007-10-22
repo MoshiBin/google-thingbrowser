@@ -1,0 +1,13 @@
+URL: http://biojava.org/wiki/BioJava:Download#BioJava_binaries
+License: GNU LGPL
+License File: LICENSE
+
+Description:
+  BioJava is an open-source project dedicated to providing a Java
+  framework for processing biological data. It include objects for
+  manipulating biological sequences, file parsers, DAS client and
+  server support, access to BioSQL and Ensembl databases, tools for
+  making sequence analysis GUIs and powerful analysis and statistical
+  routines including a dynamic programming toolkit.
+
+
