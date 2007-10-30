@@ -35,6 +35,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.JEditorPane;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
@@ -47,6 +48,8 @@ import javax.swing.text.html.ObjectView;
 
 import com.google.thingbrowser.api.Thing;
 import com.google.thingbrowser.api.ThingContextSingleton;
+import com.google.thingbrowser.api.ThingNavigationEvent;
+import com.google.thingbrowser.api.ThingNavigationListener;
 import com.google.thingbrowser.api.ThingView;
 import com.google.thingbrowser.api.ViewFormat;
 
@@ -65,7 +68,9 @@ import com.google.thingbrowser.api.ViewFormat;
  * @author ihab@google.com (Ihab Awad)
  */
 public class EmbeddedThingHtmlPane extends JEditorPane {
-  private static final String THING_URL_ATTRIBUTE_NAME = "thingurl";
+  private static final String THINGURL_ATTR = "thingurl";
+  private static final String THINGWIDTH_ATTR = "thingwidth";
+  private static final String THINGHEIGHT_ATTR = "thingheight";
 
   private class EmbeddedThingEditorKit extends HTMLEditorKit {
     public ViewFactory getViewFactory() {
@@ -95,22 +100,27 @@ public class EmbeddedThingHtmlPane extends JEditorPane {
     }
 
     protected Component createComponent() {
-      URL thingUrl = getThingUrl();
-      if (thingUrl == null) return null;
       Thing thing = ThingContextSingleton.getThingContext().
           getThingResolverRegistry().
-          getThing(ThingContextSingleton.getThingContext(), thingUrl);
+          getThing(ThingContextSingleton.getThingContext(), getThingUrl());
       ThingView thingView = ThingContextSingleton.getThingContext().
           getThingViewRegistry().newView(ViewFormat.FULL, thing);
+      thingView.addThingNavigationListener(new ThingNavigationListener() {
+        public void navigateToUrl(ThingNavigationEvent e) {
+          fireHyperlinkUpdate(
+              new HyperlinkEvent(this,
+                                 HyperlinkEvent.EventType.ACTIVATED,
+                                 e.getUrl()));
+        }
+      });
       thingView.initialize();
-      ((Component)thingView).setPreferredSize(new Dimension(400, 300));
+      ((Component)thingView).setPreferredSize(getEmbeddedSize());
       return (Component)thingView;
     }
 
     private URL getThingUrl() {
       Object attributeValue =
-        getElement().getAttributes().getAttribute(THING_URL_ATTRIBUTE_NAME);
-
+        getElement().getAttributes().getAttribute(THINGURL_ATTR);
       if (attributeValue instanceof String) {
         try {
           return new URL((String)attributeValue);
@@ -122,6 +132,14 @@ public class EmbeddedThingHtmlPane extends JEditorPane {
       } else {
         return null;
       }
+    }
+    
+    private Dimension getEmbeddedSize() {
+      return new Dimension(
+          Integer.parseInt((String)getElement().getAttributes().
+              getAttribute(THINGWIDTH_ATTR)),
+          Integer.parseInt((String)getElement().getAttributes().
+              getAttribute(THINGHEIGHT_ATTR)));
     }
   }
 
