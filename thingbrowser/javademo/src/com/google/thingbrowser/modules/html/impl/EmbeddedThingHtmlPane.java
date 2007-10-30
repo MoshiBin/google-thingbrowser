@@ -57,8 +57,8 @@ import com.google.thingbrowser.api.ViewFormat;
  * A JEditorPane that accepts Thing embeddings of the form --
  * <pre>
  *   &lt;object
- *     classid="com.google.thingbrowser.modules.html.impl.EmbeddedThing"
- *     thingurl=" ... thing url here ..."&gt;
+ *     thingurl="http://mythings.example.com/athing"
+ *     thingwidth="400" thingheight="300"&gt;
  *   &lt;/object&gt;
  * </pre>
  *
