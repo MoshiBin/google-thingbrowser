@@ -51,7 +51,7 @@ public class Resolver implements ThingResolver {
 
   static {
     try {
-      ROOT_URL = new URL("http://google-thingbrowser.googlecode.com/svn/trunk/javademo/plugins/imagefilters/");
+      ROOT_URL = new URL("http://imagefilters.example.com/");
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }

@@ -58,7 +58,7 @@ public class SwingBrowserPanel extends JPanel {
     });
 
     locationBar = new SwingLocationBar() {
-      protected void newTab() {
+      public void newTab() {
         final SwingThingBrowserView view = new SwingThingBrowserView();
         contentPanel.add(view);
         locationBar.setCurrentView(view);
@@ -83,5 +83,8 @@ public class SwingBrowserPanel extends JPanel {
     setLayout(new BorderLayout());
     add(locationBar, BorderLayout.NORTH);
     add(contentPanel, BorderLayout.CENTER);
+    
+    locationBar.newTab();
+    locationBar.home();
   }
 }

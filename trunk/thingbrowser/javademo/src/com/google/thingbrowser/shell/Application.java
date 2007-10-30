@@ -50,6 +50,7 @@ public class Application {
   public static void main(String[] argv) {
     startup();
     UIManager.put("swing.boldMetal", Boolean.FALSE);
+    if (argv.length > 0) SwingLocationBar.setHomeUrl(argv[0]);
     SwingBrowserFrame.newFrame();
   }
 

@@ -29,17 +29,16 @@
 
 package com.google.thingbrowser.modules.html.impl;
 
-import com.google.thingbrowser.api.AbstractThingView;
-import com.google.thingbrowser.api.Thing;
-
 import java.awt.Cursor;
 import java.awt.GridLayout;
 import java.io.IOException;
 
 import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+
+import com.google.thingbrowser.api.AbstractThingView;
+import com.google.thingbrowser.api.Thing;
 
 /**
  * @author ihab@google.com (Ihab Awad)
@@ -53,7 +52,7 @@ public class HtmlThingView extends AbstractThingView {
   public void initialize() {
     super.initialize();
 
-    JTextPane htmlComponent = new JTextPane();
+    EmbeddedThingHtmlPane htmlComponent = new EmbeddedThingHtmlPane();
     getContentPane().setLayout(new GridLayout(1, 1));
     getContentPane().add(new JScrollPane(htmlComponent));
 

@@ -47,8 +47,8 @@ public class StickyResolver extends AbstractThingResolver {
 
   static {
     try {
-      ROOT_URL = new URL("http://google-thingbrowser.googlecode.com/svn/trunk/javademo/plugins/stickies/");
-      STICKIES_URL = new URL("http://google-thingbrowser.googlecode.com/svn/trunk/javademo/plugins/stickies/allMyStickies");
+      ROOT_URL = new URL("http://stickies.example.com/");
+      STICKIES_URL = new URL("http://stickies.example.com/allMyStickies");
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }

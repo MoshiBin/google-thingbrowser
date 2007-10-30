@@ -50,6 +50,8 @@ import javax.swing.JToolBar;
  */
 public abstract class SwingLocationBar extends JPanel {
 
+  private static String homeUrl = "http://www.google.com/";
+  
   private final PropertyChangeListener currentUrlListener = new PropertyChangeListener() {
     public void propertyChange(PropertyChangeEvent e) {
       setTextFromUrl(currentView.getHistory().getCurrent());
@@ -145,28 +147,28 @@ public abstract class SwingLocationBar extends JPanel {
     SwingBrowserFrame.newFrame();
   }
 
-  protected abstract void newTab();
+  public abstract void newTab();
 
-  private void back() {
+  public void back() {
     if (currentView == null) return;
     currentView.getHistory().back();
   }
 
-  private void forward() {
+  public void forward() {
     if (currentView == null) return;
     currentView.getHistory().forward();
   }
 
-  private void reload() {
+  public void reload() {
     if (currentView == null) return;
     currentView.getHistory().go(currentView.getHistory().getCurrent());
   }
 
-  private void stop() {
+  public void stop() {
     // Nothing to do
   }
 
-  private void home() {
+  public void home() {
     navigateToUrl(getHomeUrl());
   }
 
@@ -191,7 +193,11 @@ public abstract class SwingLocationBar extends JPanel {
     urlField.setText(url == null ? "" : url.toExternalForm());
   }
 
-  private String getHomeUrl() {
-    return "http://google-thingbrowser.googlecode.com/svn/trunk/javademo/plugins/index.html";
+  public static synchronized String getHomeUrl() {
+    return homeUrl;
+  }
+
+  public static synchronized void setHomeUrl(String url) {
+    homeUrl = url;
   }
 }
