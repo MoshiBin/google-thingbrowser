@@ -97,6 +97,11 @@ public interface Thing {
    */
   ThingContext getThingContext();
 
+  /**
+   * Reload the content of this Thing. This is only valid for some Things.
+   */
+  void reload();
+  
   void addPropertyChangeListener(PropertyChangeListener l);
 
   void removePropertyChangeListener(PropertyChangeListener l);

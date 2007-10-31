@@ -29,24 +29,24 @@
 
 package com.google.thingbrowser.shell;
 
+import java.awt.Component;
+import java.awt.GridLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.net.URL;
+
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
+
 import com.google.thingbrowser.api.Thing;
 import com.google.thingbrowser.api.ThingContext;
 import com.google.thingbrowser.api.ThingContextSingleton;
 import com.google.thingbrowser.api.ThingNavigationEvent;
 import com.google.thingbrowser.api.ThingNavigationListener;
 import com.google.thingbrowser.api.ThingView;
+import com.google.thingbrowser.api.UrlUtilities;
 import com.google.thingbrowser.api.ViewFormat;
-
-import java.awt.Component;
-import java.awt.GridLayout;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JPanel;
 
 /**
  * A <code>BrowserView</code> is a component that displays one <code>Thing</code>
@@ -84,7 +84,7 @@ public class SwingThingBrowserView extends JPanel {
     public void propertyChange(PropertyChangeEvent e) {
       if (currentThing == null) return;
       listeningToHistory = false;
-      getHistory().go(joinUrlAndFragment(currentThing.getUrl(), currentThingView.getFragmentId()));
+      getHistory().go(UrlUtilities.joinUrlAndFragment(currentThing.getUrl(), currentThingView.getFragmentId()));
       listeningToHistory = true;
     }
   };
@@ -137,6 +137,10 @@ public class SwingThingBrowserView extends JPanel {
     firePropertyChange("icon", null, null);
   }
 
+  public void reload() {
+    if (currentThing != null) currentThing.reload();
+  }
+  
   private void cleanup() {
 
     if (currentThingView != null) {
@@ -153,39 +157,10 @@ public class SwingThingBrowserView extends JPanel {
     }
   }
 
-  private URL joinUrlAndFragment(URL url, String fragmentId) {
-    if (fragmentId == null || fragmentId.length() == 0) return url;
-    try {
-      return new URL(url, "#" + fragmentId);
-    } catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Object[] splitUrlAndFragment(URL url) {
-    String s = url.toExternalForm();
-    int idx = s.lastIndexOf('#');
-    if (idx == -1) {
-      return new Object[] {
-        url,
-        null,
-      };
-    } else {
-      try {
-        return new Object[] {
-            new URL(s.substring(0, idx)),
-            s.substring(idx + 1, s.length()),
-        };
-      } catch (MalformedURLException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
   private void newUrl() {
 
     URL url = history.getCurrent();
-    Object[] urlAndFragment = splitUrlAndFragment(url);
+    Object[] urlAndFragment = UrlUtilities.splitUrlAndFragment(url);
 
     if (currentThingView != null && currentThing != null && urlAndFragment[0].equals(currentThing.getUrl())) {
       currentThingView.setFragmentId((String)urlAndFragment[1]);

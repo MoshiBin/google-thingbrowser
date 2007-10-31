@@ -160,8 +160,7 @@ public abstract class SwingLocationBar extends JPanel {
   }
 
   public void reload() {
-    if (currentView == null) return;
-    currentView.getHistory().go(currentView.getHistory().getCurrent());
+    if (currentView != null) currentView.reload();
   }
 
   public void stop() {
