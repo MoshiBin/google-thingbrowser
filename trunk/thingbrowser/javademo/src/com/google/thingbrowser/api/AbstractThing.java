@@ -174,6 +174,10 @@ public abstract class AbstractThing implements Thing {
 
     return (T)facet;
   }
+  
+  public void reload() {
+    // This is a no-op by default.
+  }
 
   public void addPropertyChangeListener(PropertyChangeListener l) {
     pcs.addPropertyChangeListener(l);

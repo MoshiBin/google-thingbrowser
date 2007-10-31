@@ -31,10 +31,14 @@ package com.google.thingbrowser.modules.html.impl;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.JEditorPane;
+import javax.swing.JPanel;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -51,6 +55,7 @@ import com.google.thingbrowser.api.ThingContextSingleton;
 import com.google.thingbrowser.api.ThingNavigationEvent;
 import com.google.thingbrowser.api.ThingNavigationListener;
 import com.google.thingbrowser.api.ThingView;
+import com.google.thingbrowser.api.UrlUtilities;
 import com.google.thingbrowser.api.ViewFormat;
 
 /**
@@ -93,6 +98,22 @@ public class EmbeddedThingHtmlPane extends JEditorPane {
       return super.create(element);
     }
   }
+  
+  protected class ThingViewWrapper extends JPanel {
+    public ThingViewWrapper(final ThingView view) {
+      setLayout(new GridLayout(1, 1));
+      add((Component)view);
+      this.addHierarchyListener(new HierarchyListener() {
+        private boolean initialized = false;
+        public void hierarchyChanged(HierarchyEvent e) {
+          if (getTopLevelAncestor() != null && !initialized) {
+            view.initialize();
+            initialized = true;
+          }
+        }
+      });
+    }
+  };
 
   protected class EmbeddedThingView extends ObjectView {
     public EmbeddedThingView(Element element) {
@@ -100,9 +121,11 @@ public class EmbeddedThingHtmlPane extends JEditorPane {
     }
 
     protected Component createComponent() {
+      Object[] urlAndFragment = getThingUrlAndFragment();
       Thing thing = ThingContextSingleton.getThingContext().
           getThingResolverRegistry().
-          getThing(ThingContextSingleton.getThingContext(), getThingUrl());
+          getThing(ThingContextSingleton.getThingContext(), 
+                   (URL)urlAndFragment[0]);
       ThingView thingView = ThingContextSingleton.getThingContext().
           getThingViewRegistry().newView(ViewFormat.FULL, thing);
       thingView.addThingNavigationListener(new ThingNavigationListener() {
@@ -113,25 +136,30 @@ public class EmbeddedThingHtmlPane extends JEditorPane {
                                  e.getUrl()));
         }
       });
-      thingView.initialize();
-      ((Component)thingView).setPreferredSize(getEmbeddedSize());
-      return (Component)thingView;
+      thingView.setFragmentId((String)urlAndFragment[1]);
+      Dimension size = getEmbeddedSize();
+      ((Component)thingView).setPreferredSize(size);
+      ((Component)thingView).setMinimumSize(size);
+      ((Component)thingView).setMaximumSize(size);
+      return new ThingViewWrapper(thingView);
     }
 
-    private URL getThingUrl() {
+    private Object[] getThingUrlAndFragment() {
       Object attributeValue =
         getElement().getAttributes().getAttribute(THINGURL_ATTR);
+      URL url;
       if (attributeValue instanceof String) {
         try {
-          return new URL((String)attributeValue);
+          url = new URL((String)attributeValue);
         } catch (MalformedURLException e) {
           throw new RuntimeException(e);
         }
       } else if (attributeValue instanceof URL) {
-        return (URL)attributeValue;
+        url = (URL)attributeValue;
       } else {
-        return null;
+        url = null;
       }
+      return UrlUtilities.splitUrlAndFragment(url);
     }
     
     private Dimension getEmbeddedSize() {

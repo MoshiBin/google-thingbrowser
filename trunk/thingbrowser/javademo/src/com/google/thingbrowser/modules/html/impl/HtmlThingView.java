@@ -31,6 +31,8 @@ package com.google.thingbrowser.modules.html.impl;
 
 import java.awt.Cursor;
 import java.awt.GridLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 
 import javax.swing.JScrollPane;
@@ -44,6 +46,13 @@ import com.google.thingbrowser.api.Thing;
  * @author ihab@google.com (Ihab Awad)
  */
 public class HtmlThingView extends AbstractThingView {
+  private final PropertyChangeListener contentListener = new PropertyChangeListener() {
+    public void propertyChange(PropertyChangeEvent e) {
+      initializeHtmlComponent();
+    }
+  };
+  
+  private EmbeddedThingHtmlPane htmlComponent;
 
   public HtmlThingView(Thing model) {
     super(model);
@@ -51,12 +60,18 @@ public class HtmlThingView extends AbstractThingView {
 
   public void initialize() {
     super.initialize();
+    initializeHtmlComponent();
+    getModel().addPropertyChangeListener("content", contentListener);
+  }
+  
+  private void initializeHtmlComponent() {
+    getContentPane().removeAll();
+    
+    htmlComponent = new EmbeddedThingHtmlPane();
+    htmlComponent.setEditable(false);
 
-    EmbeddedThingHtmlPane htmlComponent = new EmbeddedThingHtmlPane();
     getContentPane().setLayout(new GridLayout(1, 1));
     getContentPane().add(new JScrollPane(htmlComponent));
-
-    htmlComponent.setEditable(false);
 
     htmlComponent.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -78,10 +93,11 @@ public class HtmlThingView extends AbstractThingView {
     try {
       htmlComponent.setPage(getModel().getUrl());
     } catch (IOException e) {
-      throw new Error(e);
+      throw new RuntimeException(e);
     }
   }
 
   public void dispose() {
+    getModel().removePropertyChangeListener(contentListener);
   }
 }

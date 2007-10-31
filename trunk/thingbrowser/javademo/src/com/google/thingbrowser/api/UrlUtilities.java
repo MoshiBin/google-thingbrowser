@@ -30,6 +30,7 @@
 package com.google.thingbrowser.api;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 
@@ -75,5 +76,50 @@ public class UrlUtilities {
     String result = fullUrl.substring(index + 1, fullUrl.length());
     if (result.length() == 0) return fullUrl;
     return result;
+  }
+  
+  /**
+   * Join a URL and a fragment identifier, and return a new URL
+   * 
+   * @param url a URL.
+   * @param fragmentId a fragment identifier.
+   * 
+   * @return a new URL.
+   */
+  public static URL joinUrlAndFragment(URL url, String fragmentId) {
+    if (fragmentId == null || fragmentId.length() == 0) return url;
+    try {
+      return new URL(url, "#" + fragmentId);
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Split a URL into a base and a fragment identifier.
+   * 
+   * @param url a URL.
+   * 
+   * @return an array of length 2 containing the base URL
+   * and a String fragment identifier, in that order.
+   */
+  public static Object[] splitUrlAndFragment(URL url) {
+    String s = url.toExternalForm();
+    int idx = s.lastIndexOf('#');
+    if (idx == -1) {
+      return new Object[] {
+        url,
+        null,
+      };
+    } else {
+      try {
+        return new Object[] {
+            new URL(s.substring(0, idx)),
+            s.substring(idx + 1, s.length()),
+        };
+      } catch (MalformedURLException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

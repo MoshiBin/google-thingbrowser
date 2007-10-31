@@ -46,6 +46,10 @@ public class UrlRetrievalMimeThing extends AbstractMimeThing {
     setMetadata();
   }
 
+  public void reload() {
+    firePropertyChange("content", null, null);
+  }
+  
   protected MimeResourceFacet newMimeResourceFacet() {
     return new UrlRetrievalMimeResourceFacet(this);
   }
