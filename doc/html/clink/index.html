@@ -55,33 +55,6 @@ Thing Browser specifically involved using a Java runtime in a Web
 browser, Clink provides an API allowing multiple languages to
 interoperate.</p>
 
-<p>Adopting this multi-language approach distinct advantages.  A Java
-runtime is not a prerequisite to deploy the Thing model in the browser
-and give developers and end-users its benefits. We can decouple the
-virtual machine deployment issue from the task of popularizing a new
-programming model for the Internet. Either of these problems is hard
-enough as it is.</p>
-
-<p>In addition, by allowing Things to be developed in JavaScript, we
-provide an immediate way for our Google CCC applications to implement
-the Thing API without rewriting the codebase.</p>
-
-<p>Finally, developers can continue to mix languages as they prefer.
-We avoid having to market a single programming system as the "future
-bytecode of the Internet". We can take advantage of new runtimes
-(e.g., if Ruby becomes popular for browser scripting), and we can
-easily provide gateways to other, even competing systems, such as
-Microsoft's .NET and Adobe's Apollo.</p>
-
-<p>However, this approach is not without its disadvantages. Of
-necessity, providing a behavioral interface between languages, such
-that one interface may be implemented by more than one langugage,
-requires some interface definition language. It is not clear that the
-average Web 2.0 developer is willing to deal with strict data formats
-(witness the lack of any schema in popular REST applications, and the
-use of RSS or Atom feeds without a schema); adding a strict definition
-of behavioral semantics in an IDL may be even less accepted.</p>
-
 <!-- ############################################################### -->
 
 <h2>Overview</h2>
