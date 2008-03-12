@@ -1,0 +1,443 @@
+<!--
+ This file is the main HTML, CSS and JavaScript program that renders a
+ document. The title of the document is specified below.
+
+ Copyright (C) 2008, Google, Inc.
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or (at
+ your option) any later version.
+
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+ USA
+-->
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+
+<head>
+  <title>Clink</title>
+  <link type="text/css" rel="stylesheet" href="../common/documentStyle.css"/>
+  <link type="text/css" rel="stylesheet" href="http://syntaxhighlighter.googlecode.com/svn/trunk/Styles/SyntaxHighlighter.css"/>
+  <script type="text/javascript" src="http://syntaxhighlighter.googlecode.com/svn/trunk/Scripts/shCore.js"></script>
+  <script type="text/javascript" src="http://syntaxhighlighter.googlecode.com/svn/trunk/Scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="http://syntaxhighlighter.googlecode.com/svn/trunk/Scripts/shBrushJava.js"></script>
+  <script type="text/javascript" src="http://syntaxhighlighter.googlecode.com/svn/trunk/Scripts/shBrushXml.js"></script>
+  <script type="text/javascript">
+    function highlight() { dp.SyntaxHighlighter.HighlightAll('code'); }
+  </script>
+</head>
+
+<body onload="highlight();">
+
+<h1>Clink<br/><br/><img src="clinkLogo.png"></h1>
+
+<!-- ############################################################### -->
+
+<h2>Objective</h2>
+
+<p>Develop a next-generation Internet application component model.</p>
+
+<!-- ############################################################### -->
+
+<h2>Background</h2>
+
+<p>Clink is a generalization of the Thing Browser idea. While the
+Thing Browser specifically involved using a Java runtime in a Web
+browser, Clink provides an API allowing multiple languages to
+interoperate.</p>
+
+<p>Adopting this multi-language approach distinct advantages.  A Java
+runtime is not a prerequisite to deploy the Thing model in the browser
+and give developers and end-users its benefits. We can decouple the
+virtual machine deployment issue from the task of popularizing a new
+programming model for the Internet. Either of these problems is hard
+enough as it is.</p>
+
+<p>In addition, by allowing Things to be developed in JavaScript, we
+provide an immediate way for our Google CCC applications to implement
+the Thing API without rewriting the codebase.</p>
+
+<p>Finally, developers can continue to mix languages as they prefer.
+We avoid having to market a single programming system as the "future
+bytecode of the Internet". We can take advantage of new runtimes
+(e.g., if Ruby becomes popular for browser scripting), and we can
+easily provide gateways to other, even competing systems, such as
+Microsoft's .NET and Adobe's Apollo.</p>
+
+<p>However, this approach is not without its disadvantages. Of
+necessity, providing a behavioral interface between languages, such
+that one interface may be implemented by more than one langugage,
+requires some interface definition language. It is not clear that the
+average Web 2.0 developer is willing to deal with strict data formats
+(witness the lack of any schema in popular REST applications, and the
+use of RSS or Atom feeds without a schema); adding a strict definition
+of behavioral semantics in an IDL may be even less accepted.</p>
+
+<!-- ############################################################### -->
+
+<h2>Overview</h2>
+
+<p>Clink is a plug-in that extends a browser to resolve URLs to active
+objects. These objects are implemented on the client machine, and may
+be self-contained or may be local stubs to remote services. The
+objects have a default user interface, allowing them to be either
+directly displayed by following a link or bookmark, or embedded in a
+Web page or the user interface of an enclosing object.</p>
+
+<p>Our proposal is to build an extension into one or more common Web
+browsers (initially Firefox). This extension will allow code in
+multiple implementation languages (C++, Java, JavaScript) to be
+dynamically loaded and run without restarting the browser. In our
+system, a plug-in defines a set of destinations that are identifiable
+by URIs, for example:</p>
+
+<blockquote><nobr>
+<code>http://mail.google.com/messages/fac3421a4cc123ff</code><br/>
+<code>http://mail.google.com/Inbox</code><br/>
+<code>http://mail.google.com/labels/from-joe</code>
+</nobr></blockquote>
+
+<p>Each of these destinations behaves like a "Web page": it responds
+predictably to the <em>Back</em> and <em>Forward</em> buttons; it may
+be bookmarked; etc. Similarly to the Web, the URI of each destination
+is the address of a piece of <em>data</em> provided by the hosting
+plug-in, rather than to an application environment. Pictorially, our
+architecture is as follows:</p>
+
+<center><img src="clinkHighLevelArch.png"/></center>
+
+<p>Note the following points:</p>
+
+<ul>
+
+<li><p>The plug-ins can interoperate within the Clink runtime without
+regard to their language of implementation. We will discuss how we do
+this below.</p></li>
+
+<li><p>Some plug-ins live in a security sandbox that is global to the
+entire plug-in. This is appropriate for programming languages like
+Java which allow mutable static state, such that, from a security
+perspective, an entire codebase must be considered as a unit.</p></li>
+
+<li><p>Some plug-ins are implemented such that each individual
+<em>object</em> can be sandboxed independently.  This may be possible
+with special dialects or usages of common languages, or with a
+completely new language. The benefit is that security for these
+plug-ins can be implemented using <em>object capabilities</em> and can
+therefore be made more fine-grained and usable.</p></li>
+
+</ul>
+
+<!-- ############################################################### -->
+
+<h2>Detailed Design</h2>
+
+<h3>URL resolution</h3>
+
+<p>When the user types in a link like:</p>
+
+<blockquote><code>http://mail.google.com/inbox</code></blockquote>
+
+<p>Clink intercepts this request and allows an installed plug-in to
+serve the result of this content. If no plug-in is willing to serve
+this URL, Clink allows the browser to fetch the contents normally
+using HTTP.</p>
+
+<p>Clink exposes this functionality to plug-ins running within the
+browser as well. A plug-in resolves a URL via the Clink APIs for its
+implementation language (we'll use JavaScript in our examples). The
+result of resolving a URL is a Thing object:</p>
+
+<pre name="code" class="js:nocontrols">
+var aThing = Clink.resolveUrl("http://mail.google.com/inbox");
+</pre>
+
+<p>A Thing represents some semantic unit of information (an email
+inbox, a mail message, a calendar entry) identified by the supplied
+URL. A multi-valued information source, such as an RSS feed or a set
+of search results, is represented by a Thing that has collection or
+iterator semantics.</p>
+
+<h3>User interface</h3>
+
+<p>A Thing must be able to return a DOM node representing
+itself visually:</p>
+
+<pre name="code" class="js:nocontrols">
+var aDomNode = aThing.getViewNode();
+document.getElementById("viewContainer").addChild(aDomNode);
+</pre>
+
+<p>In fact, the behavior of Clink when the user enters the URL of a
+Thing in the browser's location bar (or navigates by following a link
+or bookmark) is to simply wrap the <code>viewNode</code> of the
+resulting Thing in a minimal HTML DOM and display it in the current
+browser window.  If the visual representation of a Thing requires
+native widgets, the Thing is responsible for enclosing these in a
+suitable DOM node.</p>
+
+<h3>Programmatic interface</h3>
+
+<p>The interface of a Thing is very simple, similar to the <a
+href="http://en.wikipedia.org/wiki/IUnknown"><code>IUnknown</code></a>
+interface familiar to Microsoft COM programmers. Richer interaction
+with a Thing is granted by its Facets:</p>
+
+<center><img src="facetsOfThings.png"/></center>
+
+<p>In the above example, both Things support the
+<code>MimeResource</code> Facet (or interface), allowing them to be
+viewed as a source of MIME information. Only one of the Things
+supports the <code>MailMessage</code> Facet, making it understandable
+to an email application. The code in the email application would look
+like the following:</p>
+
+<pre name="code" class="js:nocontrols">
+var thingUrl = "http://mail.google.com/msg/24ad4c30";
+var facetUrl = "http://mail.acme.com/MailInterfaces-2.4.12.flute#MailMessage";
+
+var aThing = Clink.resolveUrl(thingUrl);
+
+if (aThing != undefined) {
+
+  // A non-null value means that the URL refers to *some* valid
+  // Thing. But the reference 'aThing' provides little or no
+  // information. We need to ask it for a specific Facet (or
+  // interface) before we can have a meaningful conversation
+  // with it.
+
+  var mailMessageFacet = aThing.getFacet(facetUrl);
+
+  if (mailMessageFacet != undefined) {
+
+    // A non-null value means that aThing supports the requested
+    // Facet *and* that we are allowed access to that Facet based
+    // on the prevailing security restrictions. We can now use that
+    // Facet to get some information.
+
+    alert("The sender is: " + mailMessageFacet.sender);
+  }
+}
+</pre>
+
+<p>Note that an instance of a Facet of a Thing is, in the security
+sense, equivalent to a capability on that Thing. We will discuss
+further the security implications of Facet negotiation later on in
+this document.</p>
+
+<h3>Flute interface definition language</h3>
+
+<p>The interface of a Facet is described in an XML language called
+Flute, which is very similar in style to <a
+href="http://relaxng.org/">Relax NG</a>. A Flute interface is
+identified by a stable URL that acts as a globally unique
+identifier. Any change to the syntax or semantics of an interface
+requires that its URL be modified. The following is a Flute document
+describing the Facets of an email application:</p>
+
+<pre name="code" class="xml:nocontrols">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+
+&lt;!DOCTYPE flute [
+  &lt;!ENTITY baseUrl "http://mail.acme.com/MailInterfaces-2.4.12.flute"&gt;
+]&gt;
+
+&lt;flute
+    baseUrl="http://mail.acme.com/MailInterfaces-2.4.12.flute"
+    xmlns="http://schemas.flute.org/flute/1.0"&gt;
+
+  &lt;interface xml:id="MailMessage"&gt;
+    &lt;property
+        name="messageId"
+        type="string"
+        access="readonly"/&gt;
+    &lt;property
+        name="sender"
+        type="&baseUrl;#EmailAddress"
+        access="readonly"/&gt;
+    &lt;property
+        name="recipients"
+        type="&baseUrl;#EmailAddress"
+        access="readonly"
+        cardinality="0..*"
+        ordered="true"/&gt;
+  &lt;/interface&gt;
+
+  &lt;interface xml:id="EmailAddress"&gt;
+     ...
+  &lt;/interface&gt;
+
+  &lt;interface xml:id="Mailbox"&gt;
+    &lt;operation name="sendMessage"&gt;
+      &lt;parameter name="message" type="&baseUrl;#MailMessage"/&gt;
+      &lt;parameter name="immediate" type="boolean"/&gt;
+    &lt;/operation&gt;
+    &lt;property
+        name="size"
+        type="integer"
+        access="readonly"/&gt;
+    &lt;operation name="getItem"&gt;
+      &lt;parameter name="index" type="integer"/&gt;
+      &lt;return type="thing"/&gt;
+    &lt;/operation&gt;
+  &lt;/interface&gt;
+
+&lt;/flute&gt;
+</pre>
+
+<p><strong>TODO(ihab):</strong> Should Relax NG schemata be available
+as a source of <code>struct</code>-like definitions for use in Flute
+interfaces? Would that be useful, and how would it work?</p>
+
+<h3>Implementation languages</h3>
+
+<p>As mentioned before, Clink can host Things in multiple languages,
+such as JavaScript, Java, C and C++. For each hosted language, Clink
+exposes APIs appropriate to the style of the language. These APIs
+allow code to register different kinds of Things, register different
+views on Things, take control of subsets of the URL space, and
+otherwise perform whatever management tasks are appropriate and
+natural for programmers in that language.
+
+<center><img src="clinkLayers.png"/></center>
+
+<h3>Flute interface repository</h3>
+
+<p>The Clink runtime requires some functionality to map abstract Flute
+URLs to Flute interface definitions. This allows us to decide on a
+case by case basis whether a given Flute file must be directly
+acessible via HTTP at the URL that identifies it or, as with XML
+namespaces, simply available in some well-known location.</p>
+
+<p>This functionality is the Flute interface repository. From any
+implementation language, it will be possible to retrieve the
+definitions corresponding to a given URL as an XML DOM.</p>
+
+<h3>JavaScript interface</h3>
+
+<p>A programmer writing in JavaScript can implement interface
+<code>...#MailMessage</code> by passing in an object having the
+desired bindings. In such a dynamic language, the Flute definition of
+the interface serves more as documentation than anything else:</p>
+
+<pre name="code" class="js:nocontrols">
+var aThing = /* some object */;
+var aSender = /* some object */;
+var mailMessageFacet = new Object() {
+  messageId : "<1175383505.m2f.104175@forums.matronics.com>",
+  sender : aSender,
+};
+
+Clink.registerFacet(
+    aThing,
+    "http://mail.acme.com/MailInterfaces-2.4.12.flute#MailMessage",
+    mailMessageFacet);
+</pre>
+
+<h3>Java interface</h3>
+
+<p>To make a Java class implement a Facet, we use annotations. This
+has the advantage of being implementable using either compile-time or
+run-time code generation, or simple manual annotation of POJOs by the
+programmer. The Clink runtime can detect when an incorrect or
+incomplete implementation is returned as an implementation of a Facet.</p>
+
+<p>An example of the implementation of the
+<code>...#MailMessage</code> interface would be:</p>
+
+<pre name="code" class="java:nocontrols">
+@FluteInterface("http://mail.acme.com/MailInterfaces-2.4.12.flute#MailMessage")
+class AcmeMailMessage {
+
+  private final String rfc822Text;
+
+  public AcmeMailMessage(String rfc822Text) {
+    this.rfc822Text = rfc822Text;
+  }
+
+  @FuteOperation("getMessageId")
+  public String getMessageId() {
+    return parseHeader("message-id");
+  }
+
+  @FuteOperation("getSender")
+  public EmailAddress getSender() {
+    return new AcmeEmailAddress(parseHeader("from"));
+  }
+
+  private String parseHeader(String name) {
+    /* ... */
+  }
+}
+</pre>
+
+<h3>Object Identity and Persistence</h3>
+
+<p>We do <em>not</em> make the requirement that resolving the same URI
+twice will result in two pointers to the same Thing, or even two
+Things that represent the same "distributed object". This is important
+in understanding how the Thing Browser can support the REST semantics
+of the Web, where an active Web page, loaded using a starting URI and
+subsequently manipulated, has state (in its dynamically changing DOM
+tree) independent from that of another page, in another browser
+window, loaded using the same URI. A Thing Resolver may resolve
+<code>http://thing.google.com/</code> to a completely new Thing each
+time it is invoked; each resulting Thing would be viewable and would
+be a new, independent interactor from which the user could initiate
+Google searches.</p>
+
+<p>Taken together, the stipulations that a Thing's URI may change
+during its lifetime, and that a URI need not uniquely identify a
+Thing, means that we leave questions of [distributed] object identity
+completely up to the plugins that implement Thing Resolvers and
+Things. The Thing Browser treats a URI as a <em>query</em> for
+information, but does not assume it is a globally unique object
+identifier.</p>
+
+<h3>Notes</h3>
+
+<p>(Clink, Flute) is <strong>not</strong> equivalent to (CORBA ORB,
+CORBA IDL) or ([D]COM, DCOM IDL). Clink assumes components running in
+the same address space, or close enough to make no material
+difference. There are no structs -- everything is an interface --
+since there is no wire protocol to worry about. There is no need to
+<em>addRef</em>, no distributed garbage collection, and no distributed
+leases, since we assume the objects are all reachable by a reasonable
+garbage collection algorithm. (Clink interfaces to C++ will require
+that developers implement lifecycle callbacks, but that's due to the
+semantics of the language, and has nothing to do with Clink
+itself.)</p>
+
+<p>We choose not to use XPIDL (and, by corollary, XPCOM) since XPIDL
+is a C++-like language that is hard to parse. One can imagine a Flute
+interface repository or dynamic Facet implementation
+generator written in <a
+href="/twiki/bin/view/Main/JavaScript">JavaScript</a> and based on XML
+or JSON (see below) representations of the Flute data. Flute can be
+validated and edited by any XML tools. Documentation can be generated
+from Flute using simple <a href="/twiki/bin/view/Main/XSS">XSS</a>
+stylesheets.</p>
+
+<p>TODO: Decide how much, if at all, to use XML Schema data types for
+primitive data types in Flute.</p>
+
+<p>We can use <a href="http://jsonml.org/" target="_top">JsonML</a>
+for mapping to JSON, thus reducing the parsing needs on the
+client. TODO: Decide how this will be represented, and whether we
+should come up with a unified scheme for asking for JSON when we
+<code>GET</code> a Flute document by HTTP.</p>
+
+<!-- ############################################################### -->
+
+</body>
+
+</html>

@@ -1,0 +1,52 @@
+.figure {
+  margin-left: 0.5in;
+}
+
+.note {
+  font-family: sans-serif;
+  font-size: 10pt;
+  font-style: italic;
+  border: 1px dotted gray;
+  margin-left: 48pt;
+  margin-right: 24pt;
+  padding: 6pt;
+  background-color: #efffef;
+}
+
+body {
+  margin-left: 0.75in;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  color: blue;
+  font-family: sans-serif;
+}
+
+h1 {
+  margin-left: -0.75in;
+  font-weight: bold;
+  text-align: center;
+}
+
+h2 {
+  margin-left: -0.625in;
+}
+
+h3 {
+  margin-left: -0.5in;
+  font-style: italic;
+}
+
+code, tt {
+  color: blue;
+}
+
+/*
+pre {
+  border: solid 1px brown;
+  padding: 5px;
+  margin-left: 0.25in;
+  margin-right: 0.25in;
+  background: cornsilk;    
+}
+*/
